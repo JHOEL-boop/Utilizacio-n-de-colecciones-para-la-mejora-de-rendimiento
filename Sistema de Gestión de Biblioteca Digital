@@ -1,0 +1,63 @@
+class Libro:
+    def __init__(self, titulo, autor, categoria, isbn):
+        self.info = (autor, titulo)  # Tupla inmutable para autor y título
+        self.categoria = categoria
+        self.isbn = isbn
+
+class Usuario:
+    def __init__(self, nombre, user_id):
+        self.nombre = nombre
+        self.user_id = user_id
+        self.libros_prestados = []  # Lista de libros prestados
+
+class Biblioteca:
+    def __init__(self):
+        self.libros = {}  # Diccionario con ISBN como clave y objeto Libro como valor
+        self.usuarios = {}  # Diccionario con user_id como clave y objeto Usuario como valor
+        self.ids_usuarios = set()  # Conjunto para IDs de usuarios únicos
+
+    def agregar_libro(self, libro):
+        self.libros[libro.isbn] = libro
+
+    def quitar_libro(self, isbn):
+        if isbn in self.libros:
+            del self.libros[isbn]
+
+    def registrar_usuario(self, usuario):
+        if usuario.user_id not in self.ids_usuarios:
+            self.usuarios[usuario.user_id] = usuario
+            self.ids_usuarios.add(usuario.user_id)
+
+    def dar_de_baja_usuario(self, user_id):
+        if user_id in self.usuarios:
+            del self.usuarios[user_id]
+            self.ids_usuarios.remove(user_id)
+
+    def prestar_libro(self, user_id, isbn):
+        if user_id in self.usuarios and isbn in self.libros:
+            usuario = self.usuarios[user_id]
+            libro = self.libros.pop(isbn)  # Elimina el libro del catálogo
+            usuario.libros_prestados.append(libro)
+
+    def devolver_libro(self, user_id, isbn):
+        if user_id in self.usuarios:
+            usuario = self.usuarios[user_id]
+            for libro in usuario.libros_prestados:
+                if libro.isbn == isbn:
+                    usuario.libros_prestados.remove(libro)
+                    self.libros[isbn] = libro  # Lo devuelve al catálogo
+                    break
+
+    def buscar_libro(self, titulo=None, autor=None, categoria=None):
+        resultados = []
+        for libro in self.libros.values():
+            if (titulo and titulo.lower() in libro.info[1].lower()) or \
+               (autor and autor.lower() in libro.info[0].lower()) or \
+               (categoria and categoria.lower() == libro.categoria.lower()):
+                resultados.append(libro)
+        return resultados
+
+    def listar_libros_prestados(self, user_id):
+        if user_id in self.usuarios:
+            return self.usuarios[user_id].libros_prestados
+        return []
